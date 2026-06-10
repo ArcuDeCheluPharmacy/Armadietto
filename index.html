@@ -1,14 +1,109 @@
+<!DOCTYPE html>
+<html lang="it">
 
-<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Armadietto Farmaci</title><link rel="stylesheet" href="styles.css"></head><body>
-<div class="container">
-<header><h1>💊 Armadietto Farmaci</h1><nav>
-<button onclick="showView('home')">Home</button>
-<button onclick="showView('inventory')">Inventario</button>
-<button onclick="openForm()">Aggiungi</button>
-</nav></header>
+<head>
+    <meta charset="utf-8">
 
-<section id="homeView" class="view"></section>
-<section id="inventoryView" class="view" hidden></section>
-<section id="formView" class="view" hidden></section>
-</div>
-<script src="app.js"></script></body></html>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1">
+
+    <title>💊 Armadietto Farmaci</title>
+
+    <link rel="stylesheet" href="styles.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- HEADER -->
+
+        <header>
+
+            <div>
+                <h1>💊 Armadietto Farmaci</h1>
+                <p class="subtitle">
+                    Gestione farmaci e scadenze
+                </p>
+            </div>
+
+            <nav>
+
+                <button
+                    class="btn"
+                    onclick="showView('home')">
+                    Dashboard
+                </button>
+
+                <button
+                    class="btn"
+                    onclick="showView('inventory')">
+                    Inventario
+                </button>
+
+                <button
+                    class="btn btn-success"
+                    onclick="openForm()">
+                    + Nuovo Farmaco
+                </button>
+
+            </nav>
+
+        </header>
+
+        <!-- NOTIFICHE -->
+
+        <div
+            id="notificationArea"
+            class="notification-area">
+        </div>
+
+        <!-- DASHBOARD -->
+
+        <section
+            id="homeView"
+            class="view">
+        </section>
+
+        <!-- INVENTARIO -->
+
+        <section
+            id="inventoryView"
+            class="view"
+            hidden>
+        </section>
+
+        <!-- FORM -->
+
+        <section
+            id="formView"
+            class="view"
+            hidden>
+        </section>
+
+        <!-- FOOTER -->
+
+        <footer>
+
+            <p>
+                💊 Armadietto Farmaci
+            </p>
+
+            <small>
+                Versione Google Sheets
+            </small>
+
+        </footer>
+
+    </div>
+
+    <script src="app.js"></script>
+
+</body>
+
+</html>
