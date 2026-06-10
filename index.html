@@ -1,1 +1,14 @@
 
+<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Armadietto Farmaci</title><link rel="stylesheet" href="styles.css"></head><body>
+<div class="container">
+<header><h1>💊 Armadietto Farmaci</h1><nav>
+<button onclick="showView('home')">Home</button>
+<button onclick="showView('inventory')">Inventario</button>
+<button onclick="openForm()">Aggiungi</button>
+</nav></header>
+
+<section id="homeView" class="view"></section>
+<section id="inventoryView" class="view" hidden></section>
+<section id="formView" class="view" hidden></section>
+</div>
+<script src="app.js"></script></body></html>
