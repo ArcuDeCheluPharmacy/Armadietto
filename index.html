@@ -1,109 +1,112 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-
 <head>
-    <meta charset="utf-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1">
-
-    <title>💊 Armadietto Farmaci</title>
-
-    <link rel="stylesheet" href="styles.css">
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Armadietto — Gestione farmaci di casa</title>
+  <meta name="description" content="Tieni sotto controllo i farmaci di casa: scadenze, quantità e posizione nel cassetto." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="./style.css" />
 </head>
-
 <body>
+  <main class="container">
+    <header class="topbar">
+      <a href="#/" class="brand">
+        <span class="brand-mark">℞</span>
+        <span class="brand-name">Armadietto</span>
+      </a>
+      <nav class="nav" id="nav"></nav>
+    </header>
 
-    <div class="container">
-
-        <!-- HEADER -->
-
-        <header>
-
-            <div>
-                <h1>💊 Armadietto Farmaci</h1>
-                <p class="subtitle">
-                    Gestione farmaci e scadenze
-                </p>
-            </div>
-
-            <nav>
-
-                <button
-                    class="btn"
-                    onclick="showView('home')">
-                    Dashboard
-                </button>
-
-                <button
-                    class="btn"
-                    onclick="showView('inventory')">
-                    Inventario
-                </button>
-
-                <button
-                    class="btn btn-success"
-                    onclick="openForm()">
-                    + Nuovo Farmaco
-                </button>
-
-            </nav>
-
-        </header>
-
-        <!-- NOTIFICHE -->
-
-        <div
-            id="notificationArea"
-            class="notification-area">
+    <!-- HOME -->
+    <section class="view" id="view-home" hidden>
+      <div class="hero">
+        <h1>Il tuo armadietto<br/>di casa, in ordine.</h1>
+        <p>Aggiungi i farmaci, tieni d'occhio le scadenze e trovali in un attimo.</p>
+        <div class="hero-actions">
+          <a href="#/aggiungi" class="btn btn-primary">Aggiungi un farmaco</a>
+          <a href="#/inventario" class="btn btn-secondary">Inventario completo</a>
         </div>
+      </div>
 
-        <!-- DASHBOARD -->
+      <div class="stats" id="stats">
+        <div class="stat"><div class="stat-num" id="stat-totali">–</div><div class="stat-lbl">Farmaci totali</div></div>
+        <div class="stat"><div class="stat-num" id="stat-scadenza">–</div><div class="stat-lbl">In scadenza (30gg)</div></div>
+        <div class="stat"><div class="stat-num" id="stat-scaduti">–</div><div class="stat-lbl">Scaduti</div></div>
+      </div>
 
-        <section
-            id="homeView"
-            class="view">
-        </section>
+      <div class="card">
+        <div class="card-head">
+          <h2>Prossimi a scadere</h2>
+          <a href="#/inventario" class="link">Vedi tutto →</a>
+        </div>
+        <ul class="list" id="prossimi"></ul>
+      </div>
+    </section>
 
-        <!-- INVENTARIO -->
+    <!-- AGGIUNGI -->
+    <section class="view" id="view-aggiungi" hidden>
+      <div class="page-head">
+        <h1 id="form-title">Aggiungi un farmaco</h1>
+        <a href="#/" class="btn btn-ghost">← Torna alla home</a>
+      </div>
 
-        <section
-            id="inventoryView"
-            class="view"
-            hidden>
-        </section>
+      <form id="form-farmaco" class="card form">
+        <input type="hidden" id="f-id" />
+        <div class="field">
+          <label for="f-nome">Nome</label>
+          <input id="f-nome" required placeholder="Es. Tachipirina 500mg" />
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-quantita">Quantità</label>
+            <input id="f-quantita" type="number" min="0" step="1" required />
+          </div>
+          <div class="field">
+            <label for="f-formato">Formato</label>
+            <input id="f-formato" placeholder="Compresse, sciroppo…" />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-scadenza">Scadenza</label>
+            <input id="f-scadenza" type="date" />
+          </div>
+          <div class="field">
+            <label for="f-posizione">Posizione</label>
+            <input id="f-posizione" placeholder="Cassetto, scaffale…" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" id="btn-cancel" class="btn btn-ghost" hidden>Annulla</button>
+          <button type="submit" class="btn btn-primary" id="btn-save">Salva</button>
+        </div>
+      </form>
+    </section>
 
-        <!-- FORM -->
+    <!-- INVENTARIO -->
+    <section class="view" id="view-inventario" hidden>
+      <div class="page-head">
+        <h1>Inventario completo</h1>
+        <a href="#/" class="btn btn-ghost">← Torna alla home</a>
+      </div>
 
-        <section
-            id="formView"
-            class="view"
-            hidden>
-        </section>
+      <div class="toolbar">
+        <input id="search" placeholder="Cerca per nome o posizione…" />
+        <a href="#/aggiungi" class="btn btn-primary">+ Aggiungi</a>
+      </div>
 
-        <!-- FOOTER -->
+      <ul class="list list-large" id="inventario"></ul>
+      <p id="empty" class="empty" hidden>Nessun farmaco nell'armadietto.</p>
+    </section>
 
-        <footer>
+    <div id="toast" class="toast" hidden></div>
 
-            <p>
-                💊 Armadietto Farmaci
-            </p>
+    <footer class="footer">Armadietto · dati su Google Sheets</footer>
+  </main>
 
-            <small>
-                Versione Google Sheets
-            </small>
-
-        </footer>
-
-    </div>
-
-    <script src="app.js"></script>
-
+  <script src="./app.js"></script>
 </body>
-
 </html>
