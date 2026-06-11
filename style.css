@@ -1,16 +1,16 @@
 :root {
-  --bg: #faf7f2;
-  --fg: #1f1b16;
-  --muted: #6b6358;
-  --border: #e7e0d3;
-  --card: #ffffff;
-  --primary: #3087b4;
-  --primary-fg: #ffffff;
-  --primary-soft: #fbe9dd;
-  --accent: #2f6b4f;
-  --danger: #b3261e;
-  --warning: #c98a1b;
-  --warning-soft: #fdf0d6;
+--bg: #f4f8fa;          /* Sfondo principale: celestino chiarissimo e riposante */
+  --fg: #1e293b;          /* Testo principale: blu notte scuro (ottimo contrasto) */
+  --muted: #64748b;       /* Testo secondario: grigio-azzurro discreto */
+  --border: #e2e8f0;      /* Bordi: grigio chiaro pulito */
+  --card: #ffffff;        /* Schede e box: bianco puro per staccare dallo sfondo */
+  --primary: #5c9ead;     /* Colore principale: celestino pastello desaturato */
+  --primary-fg: #ffffff;  /* Testo su colore principale: bianco */
+  --primary-soft: #e6f2f7; /* Sfondo soft (hover/attivo): azzurrino pastello molto chiaro */
+  --accent: #3a7d8c;      /* Accenti: un celestino più scuro e profondo */
+  --danger: #d9534f;      /* Allarmi: rosso pastello morbido */
+  --warning: #e29543;     /* Avvisi: arancione/senape pastello morbido */
+  --warning-soft: #fdf5ec;
   --radius: 14px;
   --shadow: 0 1px 2px rgba(31,27,22,.04), 0 8px 24px rgba(31,27,22,.06);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
