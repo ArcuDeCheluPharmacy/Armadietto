@@ -1,6 +1,6 @@
-// ============================================================
+// ===========================================================
 // CONFIGURAZIONE
-// ============================================================
+// ===========================================================
 const PASSWORD  = "armadietto2026";
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxb7EOgXTP6i0cfr7jxMDqdK3bNZaRfdKYzYONGEr2upumAkRlk9FJ3AcNMlAwck2YI/exec";
 
@@ -311,6 +311,21 @@ async function stopScansione() {
   btn.textContent = "📷 Scansiona";
 }
 
+// ── Aggiornamento database AIFA ───────────────────────────────
+async function importaAIFA() {
+  const btn = $("btn-importa-aifa");
+  btn.disabled = true;
+  btn.textContent = "Aggiornamento…";
+  try {
+    const data = await api("importaAIFA", {});
+    toast(data.message || "Database AIFA aggiornato");
+  } catch (err) {
+    toast("Errore AIFA: " + err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "↻ Aggiorna database AIFA";
+  }
+}
 
 // ── Delegazione eventi inventario (modifica / elimina) ────────
 function bindInventarioEvents() {
