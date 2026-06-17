@@ -1,6 +1,6 @@
-// ============================================================
+// ===========================================================
 // CONFIGURAZIONE
-// ============================================================
+// ===========================================================
 const PASSWORD  = "armadietto2026";
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxb7EOgXTP6i0cfr7jxMDqdK3bNZaRfdKYzYONGEr2upumAkRlk9FJ3AcNMlAwck2YI/exec";
 
