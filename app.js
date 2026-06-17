@@ -311,21 +311,6 @@ async function stopScansione() {
   btn.textContent = "📷 Scansiona";
 }
 
-// ── Aggiornamento database AIFA ───────────────────────────────
-async function importaAIFA() {
-  const btn = $("btn-importa-aifa");
-  btn.disabled = true;
-  btn.textContent = "Aggiornamento…";
-  try {
-    const data = await api("importaAIFA", {});
-    toast(data.message || "Database AIFA aggiornato");
-  } catch (err) {
-    toast("Errore AIFA: " + err.message, true);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "↻ Aggiorna database AIFA";
-  }
-}
 
 // ── Delegazione eventi inventario (modifica / elimina) ────────
 function bindInventarioEvents() {
