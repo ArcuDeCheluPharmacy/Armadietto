@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" />
   <link rel="stylesheet" href="./style.css" />
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
   <main class="container">
@@ -23,7 +24,7 @@
     <!-- HOME -->
     <section class="view" id="view-home" hidden>
       <div class="hero">
-        <h1>Il tuo armadietto<br/></h1>
+        <h1>Il tuo armadietto</h1>
         <p>Aggiungi i farmaci, tieni d'occhio le scadenze e trovali in un attimo.</p>
         <div class="hero-actions">
           <a href="#/aggiungi" class="btn btn-primary">Aggiungi un farmaco</a>
@@ -55,6 +56,28 @@
 
       <form id="form-farmaco" class="card form">
         <input type="hidden" id="f-id" />
+
+        <!-- Ricerca AIC AIFA -->
+        <div class="field">
+          <label for="f-aic">Cerca per codice AIC (opzionale)</label>
+          <div class="input-row">
+            <input id="f-aic" placeholder="Es. 036491016" maxlength="9"
+                   inputmode="numeric" pattern="[0-9]*" />
+            <button type="button" id="btn-cerca-aic" class="btn btn-secondary">
+              🔍 Cerca
+            </button>
+            <button type="button" id="btn-scan" class="btn btn-ghost">
+              📷 Scansiona
+            </button>
+          </div>
+          <small style="color:var(--muted)">
+            Il codice AIC è stampato in chiaro sulla scatola (9 cifre).
+            Dopo la ricerca i campi vengono compilati automaticamente.
+          </small>
+        </div>
+
+        <div id="reader" hidden></div>
+
         <div class="field">
           <label for="f-nome">Nome</label>
           <input id="f-nome" required placeholder="Es. Tachipirina 500mg" />
@@ -84,6 +107,13 @@
           <button type="submit" class="btn btn-primary" id="btn-save">Salva</button>
         </div>
       </form>
+
+      <!-- Pulsante admin: ricarica database AIFA -->
+      <div style="margin-top:2rem;text-align:right">
+        <button type="button" id="btn-importa-aifa" class="btn btn-ghost" style="font-size:0.8rem;opacity:0.6">
+          ↻ Aggiorna database AIFA
+        </button>
+      </div>
     </section>
 
     <!-- INVENTARIO -->
