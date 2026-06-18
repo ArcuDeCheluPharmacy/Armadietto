@@ -9,14 +9,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" />
   <link rel="stylesheet" href="./style.css" />
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
 </head>
 <body>
   <main class="container">
     <header class="topbar">
       <a href="#/" class="brand">
         <span class="brand-mark">💊</span>
-        <span class="brand-name"></span>
+        <span class="brand-name">Armadietto</span>
       </a>
       <nav class="nav" id="nav"></nav>
     </header>
@@ -72,11 +72,14 @@
           </div>
           <small style="color:var(--muted)">
             Il codice AIC è stampato in chiaro sulla scatola (9 cifre).
-            Dopo la ricerca i campi vengono compilati automaticamente.
+            Puoi anche scansionare il Data Matrix o il barcode sulla confezione.
           </small>
         </div>
 
-        <div id="reader" hidden></div>
+        <!-- Contenitore video fotocamera -->
+        <div id="reader" hidden style="margin-bottom:1rem">
+          <video id="video-preview" style="width:100%;border-radius:8px"></video>
+        </div>
 
         <div class="field">
           <label for="f-nome">Nome</label>
@@ -107,13 +110,6 @@
           <button type="submit" class="btn btn-primary" id="btn-save">Salva</button>
         </div>
       </form>
-
-      <!-- Pulsante admin: ricarica database AIFA -->
-      <div style="margin-top:2rem;text-align:right">
-        <button type="button" id="btn-importa-aifa" class="btn btn-ghost" style="font-size:0.8rem;opacity:0.6">
-          ↻ Aggiorna database AIFA
-        </button>
-      </div>
     </section>
 
     <!-- INVENTARIO -->
