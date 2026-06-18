@@ -192,7 +192,7 @@ function render() {
   nav.innerHTML = `
     <a href="#/" class="nav-link ${hash === "#/" ? "active" : ""}">Home</a>
     <a href="#/inventario" class="nav-link ${hash.startsWith("#/inventario") ? "active" : ""}">Inventario</a>
-    <a href="#/aggiungi" class="nav-link ${hash.startsWith("#/aggiungi") ? "active" : ""}">+ Aggiungi</a>
+    <a href="#/aggiungi" class="nav-link ${hash.startsWith("#/aggiungi") ? "active" : ""}">+Aggiungi</a>
   `;
 
   if (hash === "#/" || hash === "") {
