@@ -1,8 +1,8 @@
 // ===========================================================
 // CONFIGURAZIONE
 // ===========================================================
-const PASSWORD   = "armadietto2026";
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxb7EOgXTP6i0cfr7jxMDqdK3bNZaRfdKYzYONGEr2upumAkRlk9FJ3AcNMlAwck2YI/exec";
+const PASSWORD    = "armadietto2026";
+const SCRIPT_URL  = "https://script.google.com/macros/s/AKfycbxb7EOgXTP6i0cfr7jxMDqdK3bNZaRfdKYzYONGEr2upumAkRlk9FJ3AcNMlAwck2YI/exec";
 
 // ── Password gate ────────────────────────────────────────────
 (function gate() {
@@ -71,26 +71,13 @@ function escapeHtml(s) {
   );
 }
 
-// ── Estrazione AIC dal payload GS1 DataMatrix ─────────────────
-// Formato tipico sulle confezioni italiane:
-//   (01) 8 0XXXXXX YYYYYYY  ← GTIN-14: "80" + 6 cifre AIC + check digit
-//   (17) YYMMDD             ← scadenza
-//   (10) lotto
-//   (21) seriale
-// I separatori GS1 possono essere parentesi testuali o caratteri FNC1 (\x1D).
 function estraiAIC(raw) {
-  // 1) Prova con AI (01): cerca "80" seguito da 6 cifre AIC
   const m1 = raw.match(/(?:\(01\)|^01)8[05](\d{6})/);
   if (m1) return m1[1];
-
-  // 2) Prova formato senza parentesi (FNC1 o stringa pura)
   const m2 = raw.replace(/\x1D/g, "").match(/018[05](\d{6})/);
   if (m2) return m2[1];
-
-  // 3) Fallback: ultime 9 cifre (utile per EAN-13 classico)
   const digits = raw.replace(/\D/g, "");
   if (digits.length >= 9) return digits.slice(-9);
-
   return null;
 }
 
@@ -106,7 +93,6 @@ async function api(action, body) {
   return data;
 }
 
-// ── Caricamento farmaci ───────────────────────────────────────
 async function loadFarmaci() {
   const data = await api("list", {});
   farmaci = (data.items || []).map((r) => ({
@@ -192,7 +178,7 @@ function render() {
   nav.innerHTML = `
     <a href="#/" class="nav-link ${hash === "#/" ? "active" : ""}">Home</a>
     <a href="#/inventario" class="nav-link ${hash.startsWith("#/inventario") ? "active" : ""}">Inventario</a>
-    <a href="#/aggiungi" class="nav-link ${hash.startsWith("#/aggiungi") ? "active" : ""}">+Aggiungi</a>
+    <a href="#/aggiungi" class="nav-link ${hash.startsWith("#/aggiungi") ? "active" : ""}">+ Aggiungi</a>
   `;
 
   if (hash === "#/" || hash === "") {
@@ -208,7 +194,6 @@ function render() {
       if (editingId) resetForm();
     }
   } else if (hash.startsWith("#/inventario")) {
-    // Ferma la fotocamera se l'utente naviga via
     stopScansione();
     showView("inventario");
     renderInventario($("search")?.value || "");
@@ -271,7 +256,6 @@ async function submitForm(e) {
   }
 }
 
-// ── Ricerca AIC AIFA ──────────────────────────────────────────
 async function cercaFarmacoPerAIC(aic) {
   if (!aic || !/^\d{1,9}$/.test(aic.trim())) {
     return toast("Inserisci un codice AIC valido (fino a 9 cifre)", true);
@@ -282,7 +266,7 @@ async function cercaFarmacoPerAIC(aic) {
   try {
     toast("Ricerca in corso…");
     const data = await api("cercaAIC", { aic: aic.trim() });
-    $("f-nome").value    = data.nome    || "";
+    $("f-nome").value    = data.nome   || "";
     $("f-formato").value = data.formato || "";
     toast("✓ Dati trovati: " + (data.nome || ""));
   } catch (err) {
@@ -300,25 +284,23 @@ async function avviaScansione() {
   btn.textContent = "⏹ Stop";
   $("reader").hidden = false;
 
-  // Configura i formati da riconoscere
+  // Utilizziamo ZXing (l'oggetto globale fornito dalla libreria)
   const hints = new Map();
-  hints.set(ZXingBrowser.DecodeHintType.POSSIBLE_FORMATS, [
-    ZXingBrowser.BarcodeFormat.DATA_MATRIX,
-    ZXingBrowser.BarcodeFormat.EAN_13,
-    ZXingBrowser.BarcodeFormat.EAN_8,
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+    ZXing.BarcodeFormat.DATA_MATRIX,
+    ZXing.BarcodeFormat.EAN_13,
+    ZXing.BarcodeFormat.EAN_8,
   ]);
-  hints.set(ZXingBrowser.DecodeHintType.TRY_HARDER, true);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
 
   try {
-    zxingReader = new ZXingBrowser.BrowserMultiFormatReader(hints);
+    zxingReader = new ZXing.BrowserMultiFormatReader(hints);
 
     await zxingReader.decodeFromVideoDevice(
-      null,              // null = fotocamera posteriore di default
-      "video-preview",   // id del <video> nell'HTML
+      null,
+      "video-preview",
       async (result, err) => {
-        // "err" qui è normale: viene chiamata anche quando non c'è ancora un codice
         if (!result) return;
-
         await stopScansione();
 
         const raw = result.getText();
@@ -340,17 +322,23 @@ async function avviaScansione() {
 }
 
 async function stopScansione() {
-  if (zxingReader) {
-    try { zxingReader.reset(); } catch { /* ignora */ }
-    zxingReader = null;
-  }
-  $("reader").hidden = true;
-  // Resetta il src del video per rilasciare lo stream
+  // 1. Ferma le tracce video (spegne la fotocamera)
   const video = $("video-preview");
-  if (video) {
+  if (video && video.srcObject) {
+    const tracks = video.srcObject.getTracks();
+    tracks.forEach(track => track.stop());
     video.srcObject = null;
     video.src = "";
   }
+
+  // 2. Resetta il lettore ZXing
+  if (zxingReader) {
+    try { zxingReader.reset(); } catch (e) { console.error(e); }
+    zxingReader = null;
+  }
+
+  // 3. UI
+  $("reader").hidden = true;
   const btn = $("btn-scan");
   if (btn) {
     btn.disabled = false;
@@ -358,20 +346,15 @@ async function stopScansione() {
   }
 }
 
-// ── Delegazione eventi inventario (modifica / elimina) ────────
+// ── Init ──────────────────────────────────────────────────────
 function bindInventarioEvents() {
   $("inventario").addEventListener("click", async (e) => {
     const editId = e.target.dataset.edit;
     const delId  = e.target.dataset.del;
-
     if (editId) {
       const f = farmaci.find((x) => x.id === editId);
-      if (f) {
-        startEdit(f);
-        location.hash = "#/aggiungi";
-      }
+      if (f) { startEdit(f); location.hash = "#/aggiungi"; }
     }
-
     if (delId) {
       if (!confirm("Eliminare questo farmaco?")) return;
       try {
@@ -379,46 +362,26 @@ function bindInventarioEvents() {
         await loadFarmaci();
         renderInventario($("search")?.value || "");
         toast("Farmaco eliminato");
-      } catch (err) {
-        toast(err.message, true);
-      }
+      } catch (err) { toast(err.message, true); }
     }
   });
 }
 
-// ── Init ──────────────────────────────────────────────────────
 async function init() {
   window.addEventListener("hashchange", render);
-
   $("form-farmaco").addEventListener("submit", submitForm);
-  $("btn-cancel").addEventListener("click", () => {
-    resetForm();
-    location.hash = "#/inventario";
-  });
-
+  $("btn-cancel").addEventListener("click", () => { resetForm(); location.hash = "#/inventario"; });
   $("btn-cerca-aic").addEventListener("click", () => cercaFarmacoPerAIC($("f-aic").value));
   $("f-aic").addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); cercaFarmacoPerAIC($("f-aic").value); }
   });
-
   $("btn-scan").addEventListener("click", () => {
-    if (zxingReader) stopScansione();
-    else avviaScansione();
+    if (zxingReader) stopScansione(); else avviaScansione();
   });
-
   $("search").addEventListener("input", (e) => renderInventario(e.target.value));
-
   bindInventarioEvents();
-
   render();
-
-  try {
-    await loadFarmaci();
-    render();
-  } catch (err) {
-    toast("Errore caricamento: " + err.message, true);
-  }
+  try { await loadFarmaci(); render(); } catch (err) { toast("Errore caricamento: " + err.message, true); }
 }
 
-// Avvia l'app: questa chiamata mancava ed era la causa della schermata bianca.
 init();
