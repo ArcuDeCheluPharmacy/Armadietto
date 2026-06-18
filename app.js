@@ -1,8 +1,8 @@
-// ============================================================
+// ===========================================================
 // CONFIGURAZIONE
-// ============================================================
-const PASSWORD    = "armadietto2026";
-const SCRIPT_URL  = "https://script.google.com/macros/s/AKfycbxb7EOgXTP6i0cfr7jxMDqdK3bNZaRfdKYzYONGEr2upumAkRlk9FJ3AcNMlAwck2YI/exec";
+// ===========================================================
+const PASSWORD  = "armadietto2026";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxb7EOgXTP6i0cfr7jxMDqdK3bNZaRfdKYzYONGEr2upumAkRlk9FJ3AcNMlAwck2YI/exec";
 
 // ── Password gate ────────────────────────────────────────────
 (function gate() {
@@ -22,9 +22,9 @@ const SCRIPT_URL  = "https://script.google.com/macros/s/AKfycbxb7EOgXTP6i0cfr7jx
 })();
 
 // ── State ────────────────────────────────────────────────────
-let farmaci     = [];
-let editingId   = null;
-let zxingReader = null;   // istanza BrowserMultiFormatReader
+let farmaci    = [];
+let editingId  = null;
+let html5QrCode = null;
 
 // ── Helpers ──────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
@@ -71,16 +71,6 @@ function escapeHtml(s) {
   );
 }
 
-function estraiAIC(raw) {
-  const m1 = raw.match(/(?:\(01\)|^01)8[05](\d{6})/);
-  if (m1) return m1[1];
-  const m2 = raw.replace(/\x1D/g, "").match(/018[05](\d{6})/);
-  if (m2) return m2[1];
-  const digits = raw.replace(/\D/g, "");
-  if (digits.length >= 9) return digits.slice(-9);
-  return null;
-}
-
 // ── API (Apps Script) ─────────────────────────────────────────
 async function api(action, body) {
   const res  = await fetch(SCRIPT_URL, {
@@ -93,14 +83,15 @@ async function api(action, body) {
   return data;
 }
 
+// ── Caricamento farmaci ───────────────────────────────────────
 async function loadFarmaci() {
   const data = await api("list", {});
   farmaci = (data.items || []).map((r) => ({
-    id:        String(r.id        ?? ""),
-    nome:      String(r.nome      ?? ""),
-    quantita:  Number(r.quantita  ?? 0),
-    formato:   String(r.formato   ?? ""),
-    scadenza:  r.scadenza ? String(r.scadenza).slice(0, 10) : "",
+    id:       String(r.id       ?? ""),
+    nome:     String(r.nome     ?? ""),
+    quantita: Number(r.quantita ?? 0),
+    formato:  String(r.formato  ?? ""),
+    scadenza: r.scadenza ? String(r.scadenza).slice(0, 10) : "",
     posizione: String(r.posizione ?? ""),
   }));
 }
@@ -175,6 +166,7 @@ function render() {
   const hash = location.hash || "#/";
   const nav  = $("nav");
 
+  // Navbar link
   nav.innerHTML = `
     <a href="#/" class="nav-link ${hash === "#/" ? "active" : ""}">Home</a>
     <a href="#/inventario" class="nav-link ${hash.startsWith("#/inventario") ? "active" : ""}">Inventario</a>
@@ -186,15 +178,16 @@ function render() {
     renderHome();
   } else if (hash.startsWith("#/aggiungi")) {
     showView("aggiungi");
+    // Gestione modalità modifica via query param: #/aggiungi?id=xxx
     const idParam = hash.includes("?id=") ? hash.split("?id=")[1] : null;
     if (idParam && idParam !== editingId) {
       const f = farmaci.find((x) => x.id === idParam);
       if (f) startEdit(f);
     } else if (!idParam) {
+      // Nuova aggiunta: resetta il form solo se non eravamo già in edit
       if (editingId) resetForm();
     }
   } else if (hash.startsWith("#/inventario")) {
-    stopScansione();
     showView("inventario");
     renderInventario($("search")?.value || "");
   }
@@ -203,12 +196,12 @@ function render() {
 // ── Form ──────────────────────────────────────────────────────
 function resetForm() {
   editingId = null;
-  $("f-id").value        = "";
-  $("f-aic").value       = "";
-  $("f-nome").value      = "";
-  $("f-quantita").value  = "";
-  $("f-formato").value   = "";
-  $("f-scadenza").value  = "";
+  $("f-id").value       = "";
+  $("f-aic").value      = "";   // ← campo AIC azzerato
+  $("f-nome").value     = "";
+  $("f-quantita").value = "";
+  $("f-formato").value  = "";
+  $("f-scadenza").value = "";
   $("f-posizione").value = "";
   $("form-title").textContent = "Aggiungi un farmaco";
   $("btn-cancel").hidden = true;
@@ -216,13 +209,13 @@ function resetForm() {
 }
 
 function startEdit(f) {
-  editingId              = f.id;
-  $("f-id").value        = f.id;
-  $("f-aic").value       = "";
-  $("f-nome").value      = f.nome;
-  $("f-quantita").value  = f.quantita;
-  $("f-formato").value   = f.formato;
-  $("f-scadenza").value  = f.scadenza;
+  editingId             = f.id;
+  $("f-id").value       = f.id;
+  $("f-aic").value      = "";
+  $("f-nome").value     = f.nome;
+  $("f-quantita").value = f.quantita;
+  $("f-formato").value  = f.formato;
+  $("f-scadenza").value = f.scadenza;
   $("f-posizione").value = f.posizione;
   $("form-title").textContent = "Modifica farmaco";
   $("btn-cancel").hidden = false;
@@ -232,11 +225,11 @@ function startEdit(f) {
 async function submitForm(e) {
   e.preventDefault();
   const payload = {
-    id:        editingId || uuid(),
-    nome:      $("f-nome").value.trim(),
-    quantita:  Number($("f-quantita").value) || 0,
-    formato:   $("f-formato").value.trim(),
-    scadenza:  $("f-scadenza").value || "",
+    id:       editingId || uuid(),
+    nome:     $("f-nome").value.trim(),
+    quantita: Number($("f-quantita").value) || 0,
+    formato:  $("f-formato").value.trim(),
+    scadenza: $("f-scadenza").value || "",
     posizione: $("f-posizione").value.trim(),
   };
   if (!payload.nome) return toast("Il nome è obbligatorio", true);
@@ -256,6 +249,7 @@ async function submitForm(e) {
   }
 }
 
+// ── Ricerca AIC AIFA ──────────────────────────────────────────
 async function cercaFarmacoPerAIC(aic) {
   if (!aic || !/^\d{1,9}$/.test(aic.trim())) {
     return toast("Inserisci un codice AIC valido (fino a 9 cifre)", true);
@@ -266,7 +260,7 @@ async function cercaFarmacoPerAIC(aic) {
   try {
     toast("Ricerca in corso…");
     const data = await api("cercaAIC", { aic: aic.trim() });
-    $("f-nome").value    = data.nome   || "";
+    $("f-nome").value    = data.nome    || "";
     $("f-formato").value = data.formato || "";
     toast("✓ Dati trovati: " + (data.nome || ""));
   } catch (err) {
@@ -277,84 +271,76 @@ async function cercaFarmacoPerAIC(aic) {
   }
 }
 
-// ── Fotocamera — ZXing (Data Matrix + EAN-13) ─────────────────
+// ── Fotocamera ────────────────────────────────────────────────
 async function avviaScansione() {
   const btn = $("btn-scan");
   btn.disabled = true;
   btn.textContent = "⏹ Stop";
   $("reader").hidden = false;
 
-  // Utilizziamo ZXing (l'oggetto globale fornito dalla libreria)
-  const hints = new Map();
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-    ZXing.BarcodeFormat.DATA_MATRIX,
-    ZXing.BarcodeFormat.EAN_13,
-    ZXing.BarcodeFormat.EAN_8,
-  ]);
-  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-
   try {
-    zxingReader = new ZXing.BrowserMultiFormatReader(hints);
-
-    await zxingReader.decodeFromVideoDevice(
-      null,
-      "video-preview",
-      async (result, err) => {
-        if (!result) return;
+    html5QrCode = new Html5Qrcode("reader");
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 150 } },
+      async (decodedText) => {
         await stopScansione();
-
-        const raw = result.getText();
-        const aic = estraiAIC(raw);
-
-        if (!aic) {
-          return toast("Codice letto ma AIC non trovato: " + raw, true);
-        }
-
+        // Barcode EAN-13 italiano: le ultime 9 cifre corrispondono spesso al codice AIC
+        const aic = decodedText.replace(/\D/g, "").slice(-9);
         $("f-aic").value = aic;
-        toast("✓ Codice letto → AIC: " + aic);
+        toast("Codice letto: " + decodedText + " → AIC tentativo: " + aic);
         await cercaFarmacoPerAIC(aic);
       }
     );
-  } catch (err) {
+  } catch {
     toast("Errore fotocamera: controlla i permessi", true);
     await stopScansione();
   }
 }
 
 async function stopScansione() {
-  // 1. Ferma le tracce video (spegne la fotocamera)
-  const video = $("video-preview");
-  if (video && video.srcObject) {
-    const tracks = video.srcObject.getTracks();
-    tracks.forEach(track => track.stop());
-    video.srcObject = null;
-    video.src = "";
-  }
-
-  // 2. Resetta il lettore ZXing
-  if (zxingReader) {
-    try { zxingReader.reset(); } catch (e) { console.error(e); }
-    zxingReader = null;
-  }
-
-  // 3. UI
+  try {
+    if (html5QrCode && html5QrCode.isScanning) {
+      await html5QrCode.stop();
+    }
+  } catch { /* ignora errori di stop */ }
+  html5QrCode = null;
   $("reader").hidden = true;
   const btn = $("btn-scan");
-  if (btn) {
+  btn.disabled = false;
+  btn.textContent = "📷 Scansiona";
+}
+
+// ── Aggiornamento database AIFA ───────────────────────────────
+async function importaAIFA() {
+  const btn = $("btn-importa-aifa");
+  btn.disabled = true;
+  btn.textContent = "Aggiornamento…";
+  try {
+    const data = await api("importaAIFA", {});
+    toast(data.message || "Database AIFA aggiornato");
+  } catch (err) {
+    toast("Errore AIFA: " + err.message, true);
+  } finally {
     btn.disabled = false;
-    btn.textContent = "📷 Scansiona";
+    btn.textContent = "↻ Aggiorna database AIFA";
   }
 }
 
-// ── Init ──────────────────────────────────────────────────────
+// ── Delegazione eventi inventario (modifica / elimina) ────────
 function bindInventarioEvents() {
   $("inventario").addEventListener("click", async (e) => {
     const editId = e.target.dataset.edit;
     const delId  = e.target.dataset.del;
+
     if (editId) {
       const f = farmaci.find((x) => x.id === editId);
-      if (f) { startEdit(f); location.hash = "#/aggiungi"; }
+      if (f) {
+        startEdit(f);
+        location.hash = "#/aggiungi";
+      }
     }
+
     if (delId) {
       if (!confirm("Eliminare questo farmaco?")) return;
       try {
@@ -362,26 +348,56 @@ function bindInventarioEvents() {
         await loadFarmaci();
         renderInventario($("search")?.value || "");
         toast("Farmaco eliminato");
-      } catch (err) { toast(err.message, true); }
+      } catch (err) {
+        toast(err.message, true);
+      }
     }
   });
 }
 
+// ── Init ──────────────────────────────────────────────────────
 async function init() {
+  // Routing
   window.addEventListener("hashchange", render);
+
+  // Form
   $("form-farmaco").addEventListener("submit", submitForm);
-  $("btn-cancel").addEventListener("click", () => { resetForm(); location.hash = "#/inventario"; });
+  $("btn-cancel").addEventListener("click", () => {
+    resetForm();
+    location.hash = "#/inventario";
+  });
+
+  // Ricerca AIC
   $("btn-cerca-aic").addEventListener("click", () => cercaFarmacoPerAIC($("f-aic").value));
   $("f-aic").addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); cercaFarmacoPerAIC($("f-aic").value); }
   });
+
+  // Fotocamera
   $("btn-scan").addEventListener("click", () => {
-    if (zxingReader) stopScansione(); else avviaScansione();
+    if (html5QrCode && html5QrCode.isScanning) stopScansione();
+    else avviaScansione();
   });
+
+  // Database AIFA
+  $("btn-importa-aifa").addEventListener("click", importaAIFA);
+
+  // Ricerca inventario
   $("search").addEventListener("input", (e) => renderInventario(e.target.value));
+
+  // Click su modifica/elimina nell'inventario
   bindInventarioEvents();
+
+  // Prima render (senza dati)
   render();
-  try { await loadFarmaci(); render(); } catch (err) { toast("Errore caricamento: " + err.message, true); }
+
+  // Carica dati e ri-renderizza
+  try {
+    await loadFarmaci();
+    render();
+  } catch (err) {
+    toast("Errore caricamento: " + err.message, true);
+  }
 }
 
 init();
